@@ -7,7 +7,7 @@ You can edit this file as you like.
   [ "console"
   , "effect"
   , "form-urlencoded"
-  , "polyform-batteries"
+  , "polyform-batteries-core"
   , "psci-support"
   , "test-unit"
   ]

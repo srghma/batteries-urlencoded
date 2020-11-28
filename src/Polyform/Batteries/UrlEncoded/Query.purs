@@ -1,18 +1,23 @@
 module Polyform.Batteries.UrlEncoded.Query where
 
 import Prelude
-import Data.FoldableWithIndex (foldrWithIndex)
+
+import Data.FoldableWithIndex (foldMapWithIndex, foldrWithIndex)
 import Data.FormURLEncoded (FormURLEncoded(..))
 import Data.FormURLEncoded (decode) as FormURLEncoded
 import Data.List (List(..), intercalate) as List
 import Data.List (foldr)
 import Data.Map (Map)
-import Data.Map (fromFoldableWith, lookup, unionWith) as Map
-import Data.Maybe (Maybe)
+import Data.Map (fromFoldableWith, fromFoldableWithIndex, lookup, unionWith) as Map
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, un)
 import Data.String (Pattern(..), Replacement(..), replaceAll)
+import Data.Tuple (Tuple(..))
 import Data.Unfoldable (fromMaybe)
+import Foreign.Object (fromHomogeneous) as Object
 import Global.Unsafe (unsafeEncodeURIComponent)
+import Prim.RowList (class RowToList)
+import Type.Row.Homogeneous (class HomogeneousRowList)
 
 type Key
   = String
@@ -25,6 +30,9 @@ type Value
 -- | composing serializers.
 newtype Query
   = Query (Map Key Value)
+
+fromHomogeneous :: forall r rl. RowToList r rl => HomogeneousRowList rl Value => Record r -> Query
+fromHomogeneous = Query <<< Map.fromFoldableWithIndex <<< Object.fromHomogeneous
 
 derive instance newtypeQuery ∷ Newtype Query _
 
@@ -80,6 +88,11 @@ unsafeEncode = List.intercalate "&" <<< foldrWithIndex encodePart List.Nil <<< u
     vs -> foldr (step k) l vs
 
   step k v r = List.Cons (unsafeEncodeURIComponent k <> "=" <> unsafeEncodeURIComponent v) r
+
+toFormURLEncoded :: Query → FormURLEncoded
+toFormURLEncoded (Query query) = FormURLEncoded $ foldMapWithIndex step query
+  where
+    step k v = map (Tuple k <<< Just) v
 
 -- | Parser
 -- type Error fieldErrs errs =

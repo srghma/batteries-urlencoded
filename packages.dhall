@@ -9,17 +9,17 @@ let polyform = mkPackage
   "https://github.com/purescript-polyform/polyform.git"
   "master"
 
-let polyform-batteries = mkPackage
+let polyform-batteries-core = mkPackage
   [ "affjax", "argonaut", "debug", "decimals", "filterable", "numbers"
   , "polyform", "prelude", "record-extra", "test-unit"
   ]
-  "https://github.com/purescript-polyform/batteries.git"
+  "https://github.com/purescript-polyform/batteries-core.git"
   "master"
 
 
 let additions =
   { polyform = ../polyform/spago.dhall as Location
-  , polyform-batteries = ../polyform-batteries/spago.dhall as Location
+  , polyform-batteries-core = ../polyform-batteries/spago.dhall as Location
   }
 
 in  upstream // additions
