@@ -3,6 +3,8 @@
 module Polyform.Batteries.UrlEncoded.Duals
   ( array
   , boolean
+  , enum
+  , enum'
   , Field
   , optional
   , required
@@ -10,17 +12,24 @@ module Polyform.Batteries.UrlEncoded.Duals
   ) where
 
 import Prelude
+
 import Data.Array (singleton) as Array
+import Data.Enum (class BoundedEnum)
 import Data.Map (singleton) as Map
 import Data.Maybe (Maybe(..))
 import Polyform.Batteries (Dual) as Batteries
-import Polyform.Batteries.UrlEncoded.Query (Query(..))
+import Polyform.Batteries.Generic.Enum (InvalidEnumIndex)
+import Polyform.Batteries.Generic.Enum (dual, dual') as Enum
+import Polyform.Batteries.Int (IntExpected)
+import Polyform.Batteries.Int (dual) as Int
 import Polyform.Batteries.UrlEncoded.Query (Key, Value) as Query
+import Polyform.Batteries.UrlEncoded.Query (Query(..))
 import Polyform.Batteries.UrlEncoded.Types (Dual)
 import Polyform.Batteries.UrlEncoded.Validators (BooleanExpected, MissingValue)
 import Polyform.Batteries.UrlEncoded.Validators (array, boolean, optional, required, value) as Validators
 import Polyform.Dual (dual)
 import Polyform.Dual (parser, serializer) as Dual
+import Type.Prelude (Proxy)
 import Type.Row (type (+))
 
 type Field m e b
@@ -76,3 +85,9 @@ array =
   dual
     Validators.array
     (pure <<< Just)
+
+enum ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ Proxy a → SingleField m (IntExpected + InvalidEnumIndex + e) a
+enum p = Enum.dual p <<< Int.dual
+
+enum' ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ SingleField m (IntExpected + InvalidEnumIndex + e) a
+enum' = Enum.dual' <<< Int.dual

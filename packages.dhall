@@ -19,7 +19,7 @@ let polyform-batteries-core = mkPackage
 
 let additions =
   { polyform = ../polyform/spago.dhall as Location
-  , polyform-batteries-core = ../polyform-batteries/spago.dhall as Location
+  , polyform-batteries-core = ../batteries-core/spago.dhall as Location
   }
 
 in  upstream // additions

@@ -14,6 +14,8 @@ module Polyform.Batteries.UrlEncoded.Validators
   , _missingValue
   , array
   , boolean
+  , enum
+  , enum'
   , optional
   , optValidator
   , required
@@ -23,15 +25,20 @@ module Polyform.Batteries.UrlEncoded.Validators
 import Prelude
 import Data.Array (head) as Array
 import Data.Either (Either(..))
+import Data.Enum (class BoundedEnum)
 import Data.Maybe (Maybe(..))
 import Data.Validation.Semigroup (V(..))
 import Polyform.Batteries (Validator, invalid) as Batteries
-import Polyform.Batteries.UrlEncoded.Query (Query)
+import Polyform.Batteries.Generic.Enum (InvalidEnumIndex)
+import Polyform.Batteries.Generic.Enum (validator, validator') as Enum
+import Polyform.Batteries.Int (IntExpected)
+import Polyform.Batteries.Int (validator) as Int
 import Polyform.Batteries.UrlEncoded.Query (Query(..), Key, Value, lookup) as Query
+import Polyform.Batteries.UrlEncoded.Query (Query)
 import Polyform.Batteries.UrlEncoded.Types (Validator, fromValidator)
-import Polyform.Validator (liftFn, liftFnMV, liftFnV, runValidator)
 import Polyform.Validator (liftFn) as Validator
-import Type.Prelude (SProxy(..))
+import Polyform.Validator (liftFn, liftFnMV, liftFnV, runValidator)
+import Type.Prelude (Proxy, SProxy(..))
 import Type.Row (type (+))
 
 type Field m e b
@@ -94,11 +101,12 @@ _booleanExpected = SProxy ∷ SProxy "booleanExpected"
 type BooleanExpected e
   = ( booleanExpected ∷ Query.Value | e )
 
+-- | TODO: It seems that in the context of form validation we don't need this
+-- | and it is enough to use `Maybe String` + `isJust` to get the same result.
 boolean ∷ ∀ e m. Applicative m ⇒ Field m ( booleanExpected ∷ Query.Value | e ) Boolean
 boolean =
   liftFnV case _ of
     Just [ "on" ] → pure true
-    Just [ "off" ] → pure false
     Nothing → pure false
     Just v → Batteries.invalid _booleanExpected v
 
@@ -108,3 +116,9 @@ array =
     $ case _ of
         Just s → s
         Nothing → []
+
+enum ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ Proxy a → SingleField m (IntExpected + InvalidEnumIndex + e) a
+enum p = Enum.validator p <<< Int.validator
+
+enum' ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ SingleField m (IntExpected + InvalidEnumIndex + e) a
+enum' = Enum.validator' <<< Int.validator
