@@ -8,9 +8,10 @@ import Data.FormURLEncoded (decode) as FormURLEncoded
 import Data.List (List(..), intercalate) as List
 import Data.List (foldr)
 import Data.Map (Map)
-import Data.Map (fromFoldableWith, fromFoldableWithIndex, lookup, unionWith) as Map
+import Data.Map (fromFoldableWith, fromFoldableWithIndex, insert, lookup, unionWith, update) as Map
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, un)
+import Data.Newtype (over) as Newtype
 import Data.String (Pattern(..), Replacement(..), replaceAll)
 import Data.Tuple (Tuple(..))
 import Data.Unfoldable (fromMaybe)
@@ -36,6 +37,8 @@ fromHomogeneous = Query <<< Map.fromFoldableWithIndex <<< Object.fromHomogeneous
 
 derive instance newtypeQuery ∷ Newtype Query _
 
+derive newtype instance showQuery ∷ Show Query
+
 derive newtype instance eqQuery ∷ Eq Query
 
 instance semigroupQuery ∷ Semigroup Query where
@@ -44,8 +47,15 @@ instance semigroupQuery ∷ Semigroup Query where
 instance monoidQuery ∷ Monoid Query where
   mempty = Query mempty
 
-lookup ∷ String → Query → Maybe (Array String)
+lookup ∷ Key → Query → Maybe (Array String)
 lookup name (Query q) = Map.lookup name q
+
+insert :: Key -> Value -> Query -> Query
+insert k v = Newtype.over Query (Map.insert k v)
+
+update ∷ (Value → Maybe Value) → Key → Query → Query
+update u k = Newtype.over Query (Map.update u k)
+
 
 -- | Browsers serialize space as `+` character
 -- | which is incorrect according to the RFC 3986

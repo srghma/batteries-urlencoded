@@ -78,9 +78,11 @@ value ∷ ∀ e m. Applicative m ⇒ Field m (MissingValue + e) String
 value =
   liftFnV
     $ \qv → case qv >>= Array.head of
-        Just "" → Batteries.invalid _missingValue unit
+        Just "" → Batteries.invalid _missingValue msg unit
         Just v → pure v
-        Nothing → Batteries.invalid _missingValue unit
+        Nothing → Batteries.invalid _missingValue msg unit
+  where
+  msg _ = "Missing value"
 
 -- | We could do a bit of dance with `Choice.first` etc.
 -- | but this seems simpler and a bit more efficient
@@ -91,6 +93,8 @@ optValidator fieldValidator =
     Just "" → pure (V (Right Nothing))
     Just h → runValidator (Just <$> fieldValidator) h
 
+-- | TODO: This is probably useless. Drop this.
+-- |
 -- | Encodes default browser behavior which sets `checkbox` value to "on"
 -- | when checked and skips it completely when it is not.
 -- | We consider also "off" value because we want to be more consistent when
@@ -108,7 +112,9 @@ boolean =
   liftFnV case _ of
     Just [ "on" ] → pure true
     Nothing → pure false
-    Just v → Batteries.invalid _booleanExpected v
+    Just v → Batteries.invalid _booleanExpected msg v
+  where
+  msg _ = "Boolean expected"
 
 array ∷ ∀ e m. Monad m ⇒ Field m e (Array String)
 array =
