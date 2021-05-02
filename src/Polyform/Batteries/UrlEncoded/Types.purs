@@ -3,7 +3,7 @@ module Polyform.Batteries.UrlEncoded.Types where
 import Prelude
 import Data.Array (singleton) as Array
 import Polyform (Validator) as Polyform
-import Polyform.Batteries (Dual, Validator, Error) as Batteries
+import Polyform.Batteries (Dual, Errors, Validator) as Batteries
 import Polyform.Dual (hoistParser) as Dual
 import Polyform.Validator (lmapValidator)
 import Polyform.Validator.Dual (Dual) as Validator.Dual
@@ -13,7 +13,7 @@ type Name
   = String
 
 type Errors (errs ∷ # Type)
-  = Array { name ∷ Name, errors ∷ Array (Batteries.Error errs) }
+  = Array { name ∷ Name, errors ∷ Batteries.Errors errs }
 
 type Validator m (errs ∷ # Type) i o
   = Polyform.Validator m (Errors errs) i o
