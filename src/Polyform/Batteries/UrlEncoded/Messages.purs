@@ -23,18 +23,3 @@ type Printers
     , missingValue ∷ Unit → String
     )
 
-printers ∷ { | Printers }
-printers =
-  { booleanExpected:
-      append "Expected a boolean value but got " <<< intercalate ","
-  , intExpected: append "Expecting an int value but got " <<< show
-  , numberExpected: append "Expecting a number value but got " <<< show
-  , missingValue: const "This value is required"
-  }
-
-urlEncoded ∷
-  ∀ r r' r''.
-  Row.Union r Printers r' ⇒
-  Row.Nub r' r'' ⇒
-  Record.Builder.Builder { | r } { | r'' }
-urlEncoded = Record.Builder.merge printers

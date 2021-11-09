@@ -8,15 +8,16 @@ import Data.FormURLEncoded (decode) as FormURLEncoded
 import Data.List (List(..), intercalate) as List
 import Data.List (foldr)
 import Data.Map (Map)
-import Data.Map (fromFoldableWith, fromFoldableWithIndex, insert, lookup, unionWith, update) as Map
-import Data.Maybe (Maybe(..))
+import Data.Map (empty, fromFoldableWith, fromFoldableWithIndex, insert, lookup, unionWith, update) as Map
+import Data.Maybe (fromJust, Maybe(..))
 import Data.Newtype (class Newtype, un)
 import Data.Newtype (over) as Newtype
 import Data.String (Pattern(..), Replacement(..), replaceAll)
 import Data.Tuple (Tuple(..))
 import Data.Unfoldable (fromMaybe)
 import Foreign.Object (fromHomogeneous) as Object
-import Global.Unsafe (unsafeEncodeURIComponent)
+import JSURI (encodeURIComponent)
+import Partial.Unsafe (unsafePartial)
 import Prim.RowList (class RowToList)
 import Type.Row.Homogeneous (class HomogeneousRowList)
 
@@ -45,7 +46,7 @@ instance semigroupQuery ∷ Semigroup Query where
   append (Query d1) (Query d2) = Query (Map.unionWith append d1 d2)
 
 instance monoidQuery ∷ Monoid Query where
-  mempty = Query mempty
+  mempty = Query Map.empty
 
 lookup ∷ Key → Query → Maybe (Array String)
 lookup name (Query q) = Map.lookup name q
@@ -93,6 +94,7 @@ parse { replacePlus } query = do
 unsafeEncode ∷ Query → String
 unsafeEncode = List.intercalate "&" <<< foldrWithIndex encodePart List.Nil <<< un Query
   where
+  unsafeEncodeURIComponent k = unsafePartial $ fromJust $ encodeURIComponent k
   encodePart k varr l = case varr of
     [] -> List.Cons (unsafeEncodeURIComponent k) l
     vs -> foldr (step k) l vs

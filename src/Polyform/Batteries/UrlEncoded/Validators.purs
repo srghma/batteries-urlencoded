@@ -38,7 +38,7 @@ import Polyform.Batteries.UrlEncoded.Query (Query)
 import Polyform.Batteries.UrlEncoded.Types (Validator, fromValidator)
 import Polyform.Validator (liftFn) as Validator
 import Polyform.Validator (liftFn, liftFnMV, liftFnV, runValidator)
-import Type.Prelude (Proxy, SProxy(..))
+import Type.Prelude (Proxy(..))
 import Type.Row (type (+))
 
 type Field m e b
@@ -69,18 +69,18 @@ optional ∷
   Validator m (errs) Query (Maybe a)
 optional name fieldValidator = fromValidator name (optValidator fieldValidator <<< Validator.liftFn (Query.lookup name))
 
-_missingValue = SProxy ∷ SProxy "missingValue"
+_missingValue = Proxy ∷ Proxy "missingValue"
 
 type MissingValue e
-  = ( missingValue ∷ Unit | e )
+  = ( missingValue ∷ {} | e )
 
 value ∷ ∀ e m. Applicative m ⇒ Field m (MissingValue + e) String
 value =
   liftFnV
     $ \qv → case qv >>= Array.head of
-        Just "" → Batteries.invalid _missingValue msg unit
+        Just "" → Batteries.invalid _missingValue msg {}
         Just v → pure v
-        Nothing → Batteries.invalid _missingValue msg unit
+        Nothing → Batteries.invalid _missingValue msg {}
   where
   msg _ = "Missing value"
 
@@ -100,7 +100,7 @@ optValidator fieldValidator =
 -- | We consider also "off" value because we want to be more consistent when
 -- | building API comunication layer - if you have any objections please fill
 -- | an issue with description.
-_booleanExpected = SProxy ∷ SProxy "booleanExpected"
+_booleanExpected = Proxy ∷ Proxy "booleanExpected"
 
 type BooleanExpected e
   = ( booleanExpected ∷ Query.Value | e )

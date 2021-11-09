@@ -1,0 +1,42 @@
+{
+    "name": "purescript-polyform-batteries-urlencoded",
+    "license": [
+        "BSD-3-Clause"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/purescript-polyform/batteries-urlencoded.git"
+    },
+    "ignore": [
+        "**/.*",
+        "node_modules",
+        "bower_components",
+        "output"
+    ],
+    "dependencies": {
+        "purescript-arrays": "^v6.0.1",
+        "purescript-effect": "^v3.0.0",
+        "purescript-either": "^v5.0.0",
+        "purescript-enums": "^v5.0.0",
+        "purescript-foldable-traversable": "^v5.0.1",
+        "purescript-foreign-object": "^v3.0.0",
+        "purescript-form-urlencoded": "^v6.0.2",
+        "purescript-js-uri": "https://github.com/srghma/purescript-js-uri.git#d25d83390ba9cf948f46695b55a5511895b0068c",
+        "purescript-lists": "^v6.0.1",
+        "purescript-maybe": "^v5.0.0",
+        "purescript-newtype": "^v4.0.0",
+        "purescript-ordered-collections": "^v2.0.1",
+        "purescript-partial": "^v3.0.0",
+        "purescript-polyform": "^v0.9.0",
+        "purescript-polyform-batteries-core": "https://github.com/purescript-polyform/batteries-core.git#v0.2.0",
+        "purescript-prelude": "^v5.0.1",
+        "purescript-psci-support": "^v5.0.0",
+        "purescript-record": "^v3.0.0",
+        "purescript-strings": "^v5.0.0",
+        "purescript-test-unit": "^v16.0.0",
+        "purescript-tuples": "^v6.0.1",
+        "purescript-typelevel-prelude": "^v6.0.0",
+        "purescript-unfoldable": "^v5.0.0",
+        "purescript-validation": "^v5.0.0"
+    }
+}
