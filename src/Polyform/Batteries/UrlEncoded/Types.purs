@@ -2,11 +2,11 @@ module Polyform.Batteries.UrlEncoded.Types where
 
 import Prelude
 
-import Data.FormURLEncoded.Query (FieldId)
+import Data.FormURLEncoded.Query (FieldId(..))
 import Polyform (Validator) as Polyform
 import Polyform.Batteries (Dual, Validator) as Batteries
 import Polyform.Batteries (Msg)
-import Polyform.Batteries.UrlEncoded.Types.Errors (Errors)
+import Polyform.Batteries.UrlEncoded.Types.Errors (ErrorId(..), Errors)
 import Polyform.Batteries.UrlEncoded.Types.Errors (singleton) as Errors
 import Polyform.Dual (hoistParser) as Dual
 import Polyform.Validator (lmapValidator)
@@ -22,7 +22,7 @@ _urlEncoded = SProxy ∷ SProxy "urlEncoded"
 
 -- | Lifts base `Batteries.Validator` by enhancing possible error structure with `name` info.
 fromValidator ∷ ∀ errs m i. Monad m ⇒ FieldId → Batteries.Validator m errs i ~> Validator m errs i
-fromValidator name = lmapValidator (Errors.singleton name)
+fromValidator (FieldId name) = lmapValidator (Errors.singleton (ErrorId name))
 
 type Dual m errs i o
   = Validator.Dual.Dual m (Errors errs) i o
