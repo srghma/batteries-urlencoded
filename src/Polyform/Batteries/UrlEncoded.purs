@@ -1,5 +1,6 @@
 module Polyform.Batteries.UrlEncoded
-  ( module Types
+  ( module Exports
   ) where
 
-import Polyform.Batteries.UrlEncoded.Types (Dual, Dual', Errors, Errors', Validator, Validator', fromDual, fromValidator) as Types
+import Polyform.Batteries.UrlEncoded.Types (Dual, Dual', Validator, Validator', fromDual, fromValidator) as Exports
+import Polyform.Batteries.UrlEncoded.Types.Errors (Errors, Errors') as Exports
