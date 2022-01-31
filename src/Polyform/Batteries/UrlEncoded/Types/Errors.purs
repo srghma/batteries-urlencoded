@@ -5,7 +5,7 @@ import Prelude
 import Data.Generic.Rep (class Generic)
 import Data.Map (Map, SemigroupMap(..))
 import Data.Map (alter, insert, lookup, singleton, update) as Map
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.Newtype (over) as Newtype
 import Data.Show.Generic (genericShow)
@@ -34,8 +34,8 @@ derive newtype instance Monoid (Errors errs)
 overMap :: forall errs. (Map ErrorId (Array errs) -> Map ErrorId (Array errs)) -> Errors errs -> Errors errs
 overMap f = Newtype.over Errors (Newtype.over SemigroupMap f)
 
-lookup ∷ forall errs. ErrorId → Errors errs → Maybe (Array errs)
-lookup name (Errors (SemigroupMap q)) = Map.lookup name q
+lookup ∷ forall errs. ErrorId → Errors errs → Array errs
+lookup name (Errors (SemigroupMap q)) = fromMaybe [] $ Map.lookup name q
 
 insert :: forall errs. ErrorId -> Array errs -> Errors errs -> Errors errs
 insert k v = overMap (Map.insert k v)
