@@ -22,7 +22,7 @@ let polyform =
         , "foreign"
         ]
         "https://github.com/purescript-polyform/polyform.git"
-        "v0.9.0"
+        "master"
 
 let polyform-batteries-core =
       mkPackage
@@ -38,7 +38,7 @@ let polyform-batteries-core =
         , "test-unit"
         ]
         "https://github.com/purescript-polyform/batteries-core.git"
-        "v0.2.0"
+        "master"
 
 let upstream =
       https://github.com/purescript/package-sets/releases/download/psc-0.14.4-20211030/packages.dhall
@@ -47,4 +47,4 @@ let upstream =
 in  upstream
   with js-uri = js-uri
   with polyform = polyform
-  with polyform-batteries-core = ../batteries-core/spago.dhall as Location
+  with polyform-batteries-core = polyform-batteries-core
