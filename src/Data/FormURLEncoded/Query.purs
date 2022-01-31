@@ -9,7 +9,7 @@ import Data.FormURLEncoded (FormURLEncoded(..))
 import Data.FormURLEncoded (decode, encode) as FormURLEncoded
 import Data.Generic.Rep (class Generic)
 import Data.Map (Map, SemigroupMap(..))
-import Data.Map (fromFoldable, fromFoldableWith, insert, lookup, singleton, update) as Map
+import Data.Map (alter, fromFoldable, fromFoldableWith, insert, lookup, singleton, update) as Map
 import Data.Maybe (fromJust, Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Newtype (over) as Newtype
@@ -57,6 +57,9 @@ insert k v = overMap (Map.insert k v)
 
 update ∷ (Value → Maybe Value) → FieldId → Query → Query
 update u k = overMap (Map.update u k)
+
+alter :: (Maybe Value -> Maybe Value) -> FieldId -> Query -> Query
+alter f name = overMap (Map.alter f name)
 
 singleton :: FieldId -> Value -> Query
 singleton name value = Query (SemigroupMap (Map.singleton name value))
