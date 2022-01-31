@@ -3,7 +3,7 @@ module Polyform.Batteries.UrlEncoded.Types where
 import Prelude
 
 import Data.FormURLEncoded.Query (FieldId)
-import Data.Map (Map)
+import Data.Map (SemigroupMap(..))
 import Data.Map (singleton) as Map
 import Polyform (Validator) as Polyform
 import Polyform.Batteries (Dual, Errors, Validator) as Batteries
@@ -17,7 +17,7 @@ type Name
   = String
 
 type Errors errs
-  = Map FieldId (Batteries.Errors errs)
+  = SemigroupMap FieldId (Batteries.Errors errs)
 
 type Errors' (errs :: Row Type) = Errors (Msg errs)
 
@@ -30,7 +30,7 @@ _urlEncoded = SProxy ∷ SProxy "urlEncoded"
 
 -- | Lifts base `Batteries.Validator` by enhancing possible error structure with `name` info.
 fromValidator ∷ ∀ errs m i. Monad m ⇒ FieldId → Batteries.Validator m errs i ~> Validator m errs i
-fromValidator name = lmapValidator (Map.singleton name)
+fromValidator name = lmapValidator (SemigroupMap <<< Map.singleton name)
 
 type Dual m errs i o
   = Validator.Dual.Dual m (Errors errs) i o
