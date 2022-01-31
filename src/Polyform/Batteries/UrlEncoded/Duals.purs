@@ -1,52 +1,53 @@
 -- | You can use `Batteries.Integer.dual` or `Batteries.Number.dual` or any
 -- | other `String` based dual as value dual here.
 module Polyform.Batteries.UrlEncoded.Duals
-  ( array
-  , boolean
+  ( boolean
   , enum
   , enum'
-  , Field
+  , FieldDual
+  , MultiValueFieldDual
   , optional
   , required
+  , SingleValueFieldDual
   , value
+  , valueArray
   ) where
+
 
 import Prelude
 
 import Data.Array (singleton) as Array
 import Data.Enum (class BoundedEnum)
-import Data.Map (singleton) as Map
+import Data.FormURLEncoded.Query (FieldId, Query)
+import Data.FormURLEncoded.Query (Value, singleton) as Query
 import Data.Maybe (Maybe(..))
-import Polyform.Batteries (Dual) as Batteries
-import Polyform.Batteries.Generic.Enum (InvalidEnumIndex)
+import Polyform.Batteries (Dual') as Batteries
 import Polyform.Batteries.Generic.Enum (dual, dual') as Enum
-import Polyform.Batteries.Int (IntExpected)
 import Polyform.Batteries.Int (dual) as Int
-import Polyform.Batteries.UrlEncoded.Query (Key, Value) as Query
-import Polyform.Batteries.UrlEncoded.Query (Query(..))
-import Polyform.Batteries.UrlEncoded.Types (Dual)
-import Polyform.Batteries.UrlEncoded.Validators (BooleanExpected, MissingValue)
-import Polyform.Batteries.UrlEncoded.Validators (array, boolean, optional, required, value) as Validators
+import Polyform.Batteries.UrlEncoded.Types (Dual')
+import Polyform.Batteries.UrlEncoded.Validators (BooleanExpected, InvalidEnumValue, MissingValue, flattenEnumErr)
+import Polyform.Batteries.UrlEncoded.Validators (valueArray, boolean, optional, required, value) as Validators
 import Polyform.Dual (dual)
 import Polyform.Dual (parser, serializer) as Dual
+import Polyform.Validator.Dual (lmapDual)
 import Type.Prelude (Proxy)
 import Type.Row (type (+))
 
-type Field m e b
-  = Batteries.Dual m e (Maybe Query.Value) b
+type FieldDual m e b
+  = Batteries.Dual' m e (Maybe Query.Value) b
 
-type SingleField m e b
-  = Batteries.Dual m e String b
+type SingleValueFieldDual m e b
+  = Batteries.Dual' m e String b
 
-type MultiField m e b
-  = Batteries.Dual m e (Array String) b
+type MultiValueFieldDual m e b
+  = Batteries.Dual' m e (Array String) b
 
 optional ∷
   ∀ a e m.
   Monad m ⇒
-  Query.Key →
-  SingleField m e a →
-  Dual m e Query (Maybe a)
+  FieldId →
+  SingleValueFieldDual m e a →
+  Dual' m e Query (Maybe a)
 optional name d = dual validator serializer
   where
   validator = Validators.optional name (Dual.parser d)
@@ -54,40 +55,40 @@ optional name d = dual validator serializer
   serializer = case _ of
     Just v → do
       i ← Dual.serializer d v
-      pure (Query (Map.singleton name [ i ]))
-    Nothing → pure (Query (Map.singleton name []))
+      pure $ Query.singleton name [i]
+    Nothing → pure (Query.singleton name [])
 
 required ∷
   ∀ a e m.
   Monad m ⇒
-  Query.Key →
-  SingleField m (MissingValue + e) a →
-  Dual m (MissingValue + e) Query a
+  FieldId →
+  SingleValueFieldDual m (MissingValue + e) a →
+  Dual' m (MissingValue + e) Query a
 required name d = dual validator serializer
   where
-  validator = Validators.required name (Dual.parser d)
+    validator = Validators.required name (Dual.parser d)
 
-  serializer =
-    map (Query <<< Map.singleton name <<< Array.singleton)
-      <<< Dual.serializer d
+    serializer o = do
+      v <- Dual.serializer d o
+      pure (Query.singleton name [v])
 
-value ∷ ∀ e m. Monad m ⇒ Field m (MissingValue + e) String
+value ∷ ∀ e m. Monad m ⇒ FieldDual m (MissingValue + e) String
 value = dual Validators.value (pure <<< Just <<< Array.singleton)
 
-boolean ∷ ∀ e m. Monad m ⇒ Field m (BooleanExpected + e) Boolean
+boolean ∷ ∀ e m. Monad m ⇒ FieldDual m (BooleanExpected + e) Boolean
 boolean =
   dual
     Validators.boolean
     (pure <<< if _ then Just [ "on" ] else Just [ "off" ])
 
-array ∷ ∀ e m. Monad m ⇒ Field m e (Array String)
-array =
+valueArray ∷ ∀ e m. Monad m ⇒ FieldDual m e (Array String)
+valueArray =
   dual
-    Validators.array
+    Validators.valueArray
     (pure <<< Just)
 
-enum ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ Proxy a → SingleField m (IntExpected + InvalidEnumIndex + e) a
-enum p = Enum.dual p <<< Int.dual
+enum ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ Proxy a → SingleValueFieldDual m (InvalidEnumValue + e) a
+enum p = lmapDual (map flattenEnumErr) $ Enum.dual p <<< Int.dual
 
-enum' ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ SingleField m (IntExpected + InvalidEnumIndex + e) a
-enum' = Enum.dual' <<< Int.dual
+enum' ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ SingleValueFieldDual m (InvalidEnumValue + e) a
+enum' = lmapDual (map flattenEnumErr) $ Enum.dual' <<< Int.dual

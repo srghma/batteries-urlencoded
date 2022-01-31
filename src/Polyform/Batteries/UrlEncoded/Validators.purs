@@ -6,56 +6,59 @@
 -- | directly as field value validator.
 module Polyform.Batteries.UrlEncoded.Validators
   ( BooleanExpected
-  , Field
+  , FieldValidator
   , MissingValue
-  , SingleField
-  , module Query
+  , InvalidEnumValue
+  , SingleValueFieldValidatorValidator
   , _booleanExpected
   , _missingValue
-  , array
   , boolean
   , enum
   , enum'
+  , flattenEnumErr
   , optional
   , optValidator
   , required
   , value
+  , valueArray
   ) where
 
 import Prelude
+
 import Data.Array (head) as Array
 import Data.Either (Either(..))
 import Data.Enum (class BoundedEnum)
+import Data.FormURLEncoded.Query (FieldId, Query)
+import Data.FormURLEncoded.Query (Value, lookup) as Query
 import Data.Maybe (Maybe(..))
 import Data.Validation.Semigroup (V(..))
-import Polyform.Batteries (Validator, invalid) as Batteries
-import Polyform.Batteries.Generic.Enum (InvalidEnumIndex)
+import Polyform.Batteries (Msg, msg', onErr)
+import Polyform.Batteries (Validator', invalid) as Batteries
+import Polyform.Batteries.Generic.Enum (InvalidEnumIndex, _invalidEnumIndex)
 import Polyform.Batteries.Generic.Enum (validator, validator') as Enum
-import Polyform.Batteries.Int (IntExpected)
+import Polyform.Batteries.Int (IntExpected, _intExpected)
 import Polyform.Batteries.Int (validator) as Int
-import Polyform.Batteries.UrlEncoded.Query (Query(..), Key, Value, lookup) as Query
-import Polyform.Batteries.UrlEncoded.Query (Query)
-import Polyform.Batteries.UrlEncoded.Types (Validator, fromValidator)
+import Polyform.Batteries.UrlEncoded.Types (Validator', fromValidator)
 import Polyform.Validator (liftFn) as Validator
-import Polyform.Validator (liftFn, liftFnMV, liftFnV, runValidator)
+import Polyform.Validator (liftFn, liftFnMV, liftFnV, lmapValidator, runValidator)
 import Type.Prelude (Proxy(..))
 import Type.Row (type (+))
 
-type Field m e b
-  = Batteries.Validator m e (Maybe Query.Value) b
+type FieldValidator m e b
+  = Batteries.Validator' m e (Maybe Query.Value) b
 
-type SingleField m e b
-  = Batteries.Validator m e String b
+type SingleValueFieldValidatorValidator m e b
+  = Batteries.Validator' m e String b
 
-type MultiField m e b
-  = Batteries.Validator m e (Array String) b
+type MultiValueFieldValidatorValidator m e b
+  = Batteries.Validator' m e (Array String) b
 
 required ∷
   ∀ a m errs.
   Monad m ⇒
-  Query.Key →
-  SingleField m (MissingValue + errs) a →
-  Validator m (MissingValue + errs) Query a
+  FieldId →
+  SingleValueFieldValidatorValidator m (MissingValue + errs) a →
+  Validator' m (MissingValue + errs) Query a
 required name fieldValidator =
   fromValidator
     name
@@ -64,9 +67,9 @@ required name fieldValidator =
 optional ∷
   ∀ a m errs.
   Monad m ⇒
-  Query.Key →
-  SingleField m (errs) a →
-  Validator m (errs) Query (Maybe a)
+  FieldId →
+  SingleValueFieldValidatorValidator m (errs) a →
+  Validator' m errs Query (Maybe a)
 optional name fieldValidator = fromValidator name (optValidator fieldValidator <<< Validator.liftFn (Query.lookup name))
 
 _missingValue = Proxy ∷ Proxy "missingValue"
@@ -74,7 +77,7 @@ _missingValue = Proxy ∷ Proxy "missingValue"
 type MissingValue e
   = ( missingValue ∷ {} | e )
 
-value ∷ ∀ e m. Applicative m ⇒ Field m (MissingValue + e) String
+value ∷ ∀ e m. Applicative m ⇒ FieldValidator m (MissingValue + e) String
 value =
   liftFnV
     $ \qv → case qv >>= Array.head of
@@ -84,9 +87,17 @@ value =
   where
   msg _ = "Missing value"
 
+valueArray ∷ ∀ e m. Monad m ⇒ FieldValidator m e (Array String)
+valueArray =
+  liftFn
+    $ case _ of
+        Just s → s
+        Nothing → []
+
+
 -- | We could do a bit of dance with `Choice.first` etc.
 -- | but this seems simpler and a bit more efficient
-optValidator ∷ ∀ b e m. Monad m ⇒ SingleField m e b → Field m e (Maybe b)
+optValidator ∷ ∀ b e m. Monad m ⇒ SingleValueFieldValidatorValidator m e b → FieldValidator m e (Maybe b)
 optValidator fieldValidator =
   liftFnMV \v → case v >>= Array.head of
     Nothing → pure (V (Right Nothing))
@@ -107,7 +118,7 @@ type BooleanExpected e
 
 -- | TODO: It seems that in the context of form validation we don't need this
 -- | and it is enough to use `Maybe String` + `isJust` to get the same result.
-boolean ∷ ∀ e m. Applicative m ⇒ Field m ( booleanExpected ∷ Query.Value | e ) Boolean
+boolean ∷ ∀ e m. Applicative m ⇒ FieldValidator m ( booleanExpected ∷ Query.Value | e ) Boolean
 boolean =
   liftFnV case _ of
     Just [ "on" ] → pure true
@@ -116,15 +127,23 @@ boolean =
   where
   msg _ = "Boolean expected"
 
-array ∷ ∀ e m. Monad m ⇒ Field m e (Array String)
-array =
-  liftFn
-    $ case _ of
-        Just s → s
-        Nothing → []
+_invalidEnumValue = Proxy ∷ Proxy "invalidEnumValue"
 
-enum ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ Proxy a → SingleField m (IntExpected + InvalidEnumIndex + e) a
-enum p = Enum.validator p <<< Int.validator
+type InvalidEnumValue e = ( invalidEnumValue ∷ String | e )
 
-enum' ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ SingleField m (IntExpected + InvalidEnumIndex + e) a
-enum' = Enum.validator' <<< Int.validator
+flattenEnumErr
+  :: forall err
+   . Msg (InvalidEnumIndex + IntExpected + InvalidEnumValue + err)
+  -> Msg (InvalidEnumValue + err)
+flattenEnumErr = do
+  let
+    reMsg = msg' "Invalid choice" _invalidEnumValue
+  identity
+    # onErr _invalidEnumIndex (reMsg <<< show <<< _.info)
+    # onErr _intExpected (reMsg <<< _.info)
+
+enum ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ Proxy a → SingleValueFieldValidatorValidator m (InvalidEnumValue + e) a
+enum p = lmapValidator (map flattenEnumErr) $ Enum.validator p <<< Int.validator
+
+enum' ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ SingleValueFieldValidatorValidator m (InvalidEnumValue + e) a
+enum' = lmapValidator (map flattenEnumErr) $ Enum.validator' <<< Int.validator
