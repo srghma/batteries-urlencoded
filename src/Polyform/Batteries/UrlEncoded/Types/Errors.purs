@@ -3,7 +3,7 @@ module Polyform.Batteries.UrlEncoded.Types.Errors where
 import Prelude
 
 import Data.Generic.Rep (class Generic)
-import Data.Map (Map, SemigroupMap(..))
+import Data.Map (Map)
 import Data.Map (alter, insert, lookup, singleton, update) as Map
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Newtype (class Newtype)
@@ -21,7 +21,7 @@ instance Show ErrorId where
   show = genericShow
 
 newtype Errors errs
-  = Errors (SemigroupMap ErrorId (Batteries.Errors errs))
+  = Errors (Map ErrorId (Array errs))
 
 type Errors' (errs :: Row Type) = Errors (Msg errs)
 
@@ -32,10 +32,10 @@ derive newtype instance Monoid (Errors errs)
 
 -- Internal
 overMap :: forall errs. (Map ErrorId (Array errs) -> Map ErrorId (Array errs)) -> Errors errs -> Errors errs
-overMap f = Newtype.over Errors (Newtype.over SemigroupMap f)
+overMap f = Newtype.over Errors f
 
 lookup ∷ forall errs. ErrorId → Errors errs → Array errs
-lookup name (Errors (SemigroupMap q)) = fromMaybe [] $ Map.lookup name q
+lookup name (Errors q) = fromMaybe [] $ Map.lookup name q
 
 insert :: forall errs. ErrorId -> Array errs -> Errors errs -> Errors errs
 insert k v = overMap (Map.insert k v)
@@ -47,5 +47,5 @@ alter :: forall errs. (Maybe (Array errs) -> Maybe (Array errs)) -> ErrorId -> E
 alter f name = overMap (Map.alter f name)
 
 singleton :: forall errs. ErrorId -> Array errs -> Errors errs
-singleton name value = Errors (SemigroupMap (Map.singleton name value))
+singleton name value = Errors (Map.singleton name value)
 
