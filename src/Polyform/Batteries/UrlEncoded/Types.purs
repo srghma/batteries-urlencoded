@@ -11,14 +11,14 @@ import Polyform.Batteries.UrlEncoded.Types.Errors (singleton) as Errors
 import Polyform.Dual (hoistParser) as Dual
 import Polyform.Validator (lmapValidator)
 import Polyform.Validator.Dual (Dual) as Validator.Dual
-import Type.Prelude (SProxy(..))
+import Type.Prelude (Proxy(..))
 
 type Validator m errs i o
   = Polyform.Validator m (Errors errs) i o
 
 type Validator' m (errs :: Row Type) i o = Validator m (Msg errs) i o
 
-_urlEncoded = SProxy ∷ SProxy "urlEncoded"
+_urlEncoded = Proxy ∷ Proxy "urlEncoded"
 
 -- | Lifts base `Batteries.Validator` by enhancing possible error structure with `name` info.
 fromValidator ∷ ∀ errs m i. Monad m ⇒ FieldId → Batteries.Validator m errs i ~> Validator m errs i
