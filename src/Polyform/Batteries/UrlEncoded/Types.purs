@@ -3,6 +3,7 @@ module Polyform.Batteries.UrlEncoded.Types where
 import Prelude
 
 import Data.FormURLEncoded.Query (FieldId(..))
+import Data.Lazy as Lazy
 import Polyform (Validator) as Polyform
 import Polyform.Batteries (Dual, Validator) as Batteries
 import Polyform.Batteries (Msg)
@@ -17,6 +18,9 @@ type Validator m errs i o
   = Polyform.Validator m (Errors errs) i o
 
 type Validator' m (errs :: Row Type) i o = Validator m (Msg errs) i o
+
+stringifyValidator ∷ ∀ m errs i o. Monad m ⇒ Validator' m errs i o → Validator m String i o
+stringifyValidator = lmapValidator (map (Lazy.force <<< _.msg))
 
 _urlEncoded = Proxy ∷ Proxy "urlEncoded"
 

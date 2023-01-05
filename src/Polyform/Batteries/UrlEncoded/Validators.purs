@@ -9,7 +9,7 @@ module Polyform.Batteries.UrlEncoded.Validators
   , FieldValidator
   , MissingValue
   , InvalidEnumValue
-  , SingleValueFieldValidatorValidator
+  , SingleValueFieldValidator
   , _booleanExpected
   , _missingValue
   , boolean
@@ -47,17 +47,17 @@ import Type.Row (type (+))
 type FieldValidator m e b
   = Batteries.Validator' m e (Maybe Query.Value) b
 
-type SingleValueFieldValidatorValidator m e b
+type SingleValueFieldValidator m e b
   = Batteries.Validator' m e String b
 
-type MultiValueFieldValidatorValidator m e b
+type MultiValueFieldValidator m e b
   = Batteries.Validator' m e (Array String) b
 
 required ∷
   ∀ a m errs.
   Monad m ⇒
   FieldId →
-  SingleValueFieldValidatorValidator m (MissingValue + errs) a →
+  SingleValueFieldValidator m (MissingValue + errs) a →
   Validator' m (MissingValue + errs) Query a
 required name fieldValidator =
   fromValidator
@@ -68,7 +68,7 @@ optional ∷
   ∀ a m errs.
   Monad m ⇒
   FieldId →
-  SingleValueFieldValidatorValidator m (errs) a →
+  SingleValueFieldValidator m (errs) a →
   Validator' m errs Query (Maybe a)
 optional name fieldValidator = fromValidator name (optValidator fieldValidator <<< Validator.liftFn (Query.lookup name))
 
@@ -94,10 +94,9 @@ valueArray =
         Just s → s
         Nothing → []
 
-
 -- | We could do a bit of dance with `Choice.first` etc.
 -- | but this seems simpler and a bit more efficient
-optValidator ∷ ∀ b e m. Monad m ⇒ SingleValueFieldValidatorValidator m e b → FieldValidator m e (Maybe b)
+optValidator ∷ ∀ b e m. Monad m ⇒ SingleValueFieldValidator m e b → FieldValidator m e (Maybe b)
 optValidator fieldValidator =
   liftFnMV \v → case v >>= Array.head of
     Nothing → pure (V (Right Nothing))
@@ -142,8 +141,8 @@ flattenEnumErr = do
     # onErr _invalidEnumIndex (reMsg <<< show <<< _.info)
     # onErr _intExpected (reMsg <<< _.info)
 
-enum ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ Proxy a → SingleValueFieldValidatorValidator m (InvalidEnumValue + e) a
+enum ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ Proxy a → SingleValueFieldValidator m (InvalidEnumValue + e) a
 enum p = lmapValidator (map flattenEnumErr) $ Enum.validator p <<< Int.validator
 
-enum' ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ SingleValueFieldValidatorValidator m (InvalidEnumValue + e) a
+enum' ∷ ∀ a e m. Monad m ⇒ BoundedEnum a ⇒ SingleValueFieldValidator m (InvalidEnumValue + e) a
 enum' = lmapValidator (map flattenEnumErr) $ Enum.validator' <<< Int.validator

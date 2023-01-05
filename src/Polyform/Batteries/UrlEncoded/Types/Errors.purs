@@ -2,6 +2,7 @@ module Polyform.Batteries.UrlEncoded.Types.Errors where
 
 import Prelude
 
+import Data.Foldable (class Foldable)
 import Data.Generic.Rep (class Generic)
 import Data.Map (Map)
 import Data.Map (alter, insert, lookup, singleton, update) as Map
@@ -9,6 +10,7 @@ import Data.Maybe (Maybe, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.Newtype (over) as Newtype
 import Data.Show.Generic (genericShow)
+import Data.Traversable (class Traversable)
 import Polyform.Batteries (Errors) as Batteries
 import Polyform.Batteries (Msg)
 
@@ -27,6 +29,9 @@ type Errors' (errs :: Row Type) = Errors (Msg errs)
 
 derive instance Newtype (Errors errs) _
 derive newtype instance Eq errs => Eq (Errors errs)
+derive instance Functor Errors
+derive instance Foldable Errors
+derive instance Traversable Errors
 derive newtype instance Semigroup (Errors errs)
 derive newtype instance Monoid (Errors errs)
 
