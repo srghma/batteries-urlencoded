@@ -1,0 +1,35 @@
+package:
+  dependencies:
+    - arrays
+    - effect
+    - either
+    - enums
+    - foldable-traversable
+    - foreign-object
+    - form-urlencoded
+    - maybe
+    - newtype
+    - ordered-collections
+    - partial
+    - polyform
+    - polyform-batteries-core
+    - prelude
+    - test-unit
+    - tuples
+    - typelevel-prelude
+    - unfoldable
+    - validation
+  name: batteries-urlencoded
+workspace:
+  extraPackages:
+    js-unsafe-stringify:
+      git: https://github.com/srghma/purescript-js-unsafe-stringify.git
+      ref: master
+    polyform:
+      git: https://github.com/srghma/polyform.git
+      ref: master
+    polyform-batteries-core:
+      git: https://github.com/srghma/batteries-core.git
+      ref: master
+  packageSet:
+    registry: 60.4.0
