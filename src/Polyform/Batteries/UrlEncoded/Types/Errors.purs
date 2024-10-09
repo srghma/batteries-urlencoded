@@ -14,6 +14,7 @@ import Data.Traversable (class Traversable)
 import Polyform.Batteries (Msg)
 
 newtype ErrorId = ErrorId String
+
 derive instance Newtype ErrorId _
 derive instance Generic ErrorId _
 derive newtype instance Eq ErrorId
@@ -21,8 +22,7 @@ derive newtype instance Ord ErrorId
 instance Show ErrorId where
   show = genericShow
 
-newtype Errors errs
-  = Errors (Map ErrorId (Array errs))
+newtype Errors errs = Errors (Map ErrorId (Array errs))
 
 type Errors' (errs :: Row Type) = Errors (Msg errs)
 
@@ -36,7 +36,6 @@ derive newtype instance Semigroup (Errors errs)
 derive newtype instance Monoid (Errors errs)
 instance Show errs => Show (Errors errs) where
   show = genericShow
-
 
 -- Internal
 overMap :: forall errs. (Map ErrorId (Array errs) -> Map ErrorId (Array errs)) -> Errors errs -> Errors errs

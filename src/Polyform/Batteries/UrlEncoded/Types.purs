@@ -14,8 +14,7 @@ import Polyform.Validator (lmapValidator)
 import Polyform.Validator.Dual (Dual) as Validator.Dual
 import Type.Prelude (Proxy(..))
 
-type Validator m errs i o
-  = Polyform.Validator m (Errors errs) i o
+type Validator m errs i o = Polyform.Validator m (Errors errs) i o
 
 type Validator' m (errs :: Row Type) i o = Validator m (Msg errs) i o
 
@@ -28,13 +27,11 @@ _urlEncoded = Proxy ∷ Proxy "urlEncoded"
 fromValidator ∷ ∀ errs m i. Monad m ⇒ FieldId → Batteries.Validator m errs i ~> Validator m errs i
 fromValidator (FieldId name) = lmapValidator (Errors.singleton (ErrorId name))
 
-type Dual m errs i o
-  = Validator.Dual.Dual m (Errors errs) i o
+type Dual m errs i o = Validator.Dual.Dual m (Errors errs) i o
 
 type Dual' m (errs :: Row Type) i o = Dual m (Msg errs) i o
 
 -- | Lifts base `Batteries.Dual` by enhancing possilbe errors structure with `name` info.
 fromDual ∷ ∀ errs i m. Monad m ⇒ FieldId → Batteries.Dual m errs i ~> Dual m errs i
 fromDual name = Dual.hoistParser (fromValidator name)
-
 

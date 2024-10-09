@@ -56,13 +56,13 @@ suite = do
                   -- | We expect that our layout is constructed correctly all the time
                   expectedReport = [ "foo", "bar" ]
 
-                testForm form {_ignore: []} expectedReport Nothing
+                testForm form { _ignore: [] } expectedReport Nothing
 
-                testForm form { foo: ["value"] } expectedReport Nothing
+                testForm form { foo: [ "value" ] } expectedReport Nothing
 
                 testForm
                   form
-                  { foo: ["value"], bar: ["value"] }
+                  { foo: [ "value" ], bar: [ "value" ] }
                   expectedReport
                   (Just { foo: "value", bar: "value" })
 

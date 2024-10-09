@@ -1,5 +1,6 @@
 -- TODO: Rename to `Dict`
 module Data.FormURLEncoded.Query where
+
 -- | `Map` based search params representation.
 -- |  `FormURLEncoded` is based on `Array (String /\ Maybe String)`.
 
@@ -26,6 +27,7 @@ import Safe.Coerce (coerce)
 import Type.Row.Homogeneous (class HomogeneousRowList)
 
 newtype FieldId = FieldId String
+
 derive instance Newtype FieldId _
 derive instance Generic FieldId _
 derive newtype instance Eq FieldId
@@ -33,15 +35,13 @@ derive newtype instance Ord FieldId
 instance Show FieldId where
   show = genericShow
 
-type Value
-  = Array String
+type Value = Array String
 
 -- | We need a map representation of query with
 -- | appending semigroup so we can use it when
 -- | composing serializers.
 -- | TODO: rename to `Dict`
-newtype Query
-  = Query (Map FieldId Value)
+newtype Query = Query (Map FieldId Value)
 
 derive instance Newtype Query _
 derive newtype instance Eq Query
@@ -70,7 +70,7 @@ singleton name value = Query (Map.singleton name value)
 toFormURLEncoded :: Query → FormURLEncoded
 toFormURLEncoded (Query query) = FormURLEncoded $ foldMapWithIndex step query
   where
-    step (FieldId k) v = map (Tuple k <<< Just) v
+  step (FieldId k) v = map (Tuple k <<< Just) v
 
 decode ∷ String → Maybe Query
 decode query = do
@@ -97,8 +97,8 @@ unsafeEncode = unsafePartial $ fromJust <<< encode
 fromHomogeneous :: forall r rl. RowToList r rl => HomogeneousRowList rl Value => Record r -> Query
 fromHomogeneous = Query <<< Map.fromFoldable <<< coerceFieldIds <<< Object.toArrayWithKey (/\) <<< Object.fromHomogeneous
   where
-    coerceFieldIds :: Array (String /\ Value) -> Array (FieldId /\ Value)
-    coerceFieldIds = coerce
+  coerceFieldIds :: Array (String /\ Value) -> Array (FieldId /\ Value)
+  coerceFieldIds = coerce
 
 fromFoldable :: forall f. Foldable f => f (FieldId /\ Array String) -> Query
 fromFoldable = Query <<< Map.fromFoldable

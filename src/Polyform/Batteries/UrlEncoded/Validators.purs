@@ -54,56 +54,52 @@ import Polyform.Validator (liftFn, liftFnMV, liftFnV, lmapValidator, runValidato
 import Type.Prelude (Proxy(..))
 import Type.Row (type (+))
 
-type FieldValidator m e b
-  = Batteries.Validator m e (Maybe Query.Value) b
+type FieldValidator m e b = Batteries.Validator m e (Maybe Query.Value) b
 
-type SingleValueFieldValidator m e b
-  = Batteries.Validator m e String b
+type SingleValueFieldValidator m e b = Batteries.Validator m e String b
 
-type MultiValueFieldValidator m e b
-  = Batteries.Validator m e (Array String) b
+type MultiValueFieldValidator m e b = Batteries.Validator m e (Array String) b
 
 -- | Generic over error type.
-required ∷
-  ∀ a m err.
-  Monad m ⇒
-  FieldId →
-  err ->
-  Batteries.Validator m err String a →
-  Validator m err Query a
+required
+  ∷ ∀ a m err
+   . Monad m
+  ⇒ FieldId
+  → err
+  -> Batteries.Validator m err String a
+  → Validator m err Query a
 required name err fieldValidator =
   fromValidator
     name
     (fieldValidator <<< value err <<< Validator.liftFn (Query.lookup name))
 
 -- | Using `Batteries.Msg` for error type.
-required' ∷
-  ∀ a m err.
-  Monad m ⇒
-  FieldId →
-  Batteries.Validator m (Msg (MissingValue + err)) String a →
-  Validator m (Msg (MissingValue + err)) Query a
+required'
+  ∷ ∀ a m err
+  . Monad m
+  ⇒ FieldId
+  → Batteries.Validator m (Msg (MissingValue + err)) String a
+  → Validator m (Msg (MissingValue + err)) Query a
 required' name fieldValidator =
   fromValidator
     name
     (fieldValidator <<< value (missingValue "Missing value") <<< Validator.liftFn (Query.lookup name))
 
-
-optional ∷
-  ∀ a m errs.
-  Monad m ⇒
-  FieldId →
-  Batteries.Validator m errs String a →
-  UrlEncoded.Validator m errs Query (Maybe a)
+optional
+  ∷ ∀ a m errs
+  . Monad m
+  ⇒ FieldId
+  → Batteries.Validator m errs String a
+  → UrlEncoded.Validator m errs Query (Maybe a)
 optional name fieldValidator = fromValidator name (optValidator fieldValidator <<< Validator.liftFn (Query.lookup name))
 
-requiredMulti ∷
-  ∀ a m err.
-  Monad m ⇒
-  FieldId →
-  err →
-  Batteries.Validator m err (NonEmptyArray String) (NonEmptyArray a) →
-  Validator m err Query (NonEmptyArray a)
+requiredMulti
+  ∷ ∀ a m err
+  . Monad m
+  ⇒ FieldId
+  → err
+  → Batteries.Validator m err (NonEmptyArray String) (NonEmptyArray a)
+  → Validator m err Query (NonEmptyArray a)
 requiredMulti name err fieldValidator =
   fromValidator
     name
@@ -111,23 +107,23 @@ requiredMulti name err fieldValidator =
   where
   nonEmptyArray = liftFnV
     $ Array.NonEmpty.fromArray >>> case _ of
-      Just arr -> pure arr
-      Nothing → V.invalid [err] -- Batteries.invalid _missingValue (const "Missing value") {}
+        Just arr -> pure arr
+        Nothing → V.invalid [ err ] -- Batteries.invalid _missingValue (const "Missing value") {}
 
-requiredMulti' ∷
-  ∀ a m errs.
-  Monad m ⇒
-  FieldId →
-  Batteries.Validator m (Msg (MissingValue + errs)) (NonEmptyArray String) (NonEmptyArray a) →
-  Validator m (Msg (MissingValue + errs)) Query (NonEmptyArray a)
+requiredMulti'
+  ∷ ∀ a m errs
+  . Monad m
+  ⇒ FieldId
+  → Batteries.Validator m (Msg (MissingValue + errs)) (NonEmptyArray String) (NonEmptyArray a)
+  → Validator m (Msg (MissingValue + errs)) Query (NonEmptyArray a)
 requiredMulti' name fieldValidator = requiredMulti name (missingValue "Missing value") fieldValidator
 
-optionalMulti ∷
-  ∀ a m errs.
-  Monad m ⇒
-  FieldId →
-  Batteries.Validator' m errs (Array String) (Array a) →
-  Validator' m errs Query (Array a)
+optionalMulti
+  ∷ ∀ a m errs
+  . Monad m
+  ⇒ FieldId
+  → Batteries.Validator' m errs (Array String) (Array a)
+  → Validator' m errs Query (Array a)
 optionalMulti name fieldValidator =
   fromValidator
     name
@@ -135,8 +131,7 @@ optionalMulti name fieldValidator =
 
 _missingValue = Proxy ∷ Proxy "missingValue"
 
-type MissingValue e
-  = ( missingValue ∷ {} | e )
+type MissingValue e = (missingValue ∷ {} | e)
 
 missingValue ∷ ∀ err. String -> Msg (MissingValue err)
 missingValue msg = Batteries.msg' msg _missingValue {}
@@ -145,9 +140,9 @@ value ∷ ∀ err m. Applicative m ⇒ err -> Batteries.Validator m err (Maybe Q
 value err =
   liftFnV
     $ \qv → case qv >>= Array.head of
-        Just "" → V.invalid [err]
+        Just "" → V.invalid [ err ]
         Just v → pure v
-        Nothing → V.invalid [err]
+        Nothing → V.invalid [ err ]
 
 valueArray ∷ ∀ e m. Monad m ⇒ FieldValidator m e (Array String)
 valueArray =
@@ -174,12 +169,11 @@ optValidator fieldValidator =
 -- | an issue with description.
 _booleanExpected = Proxy ∷ Proxy "booleanExpected"
 
-type BooleanExpected e
-  = ( booleanExpected ∷ Query.Value | e )
+type BooleanExpected e = (booleanExpected ∷ Query.Value | e)
 
 -- | TODO: It seems that in the context of form validation we don't need this
 -- | and it is enough to use `Maybe String` + `isJust` to get the same result.
-boolean ∷ ∀ e m. Applicative m ⇒ FieldValidator m (Msg (booleanExpected ∷ Query.Value | e )) Boolean
+boolean ∷ ∀ e m. Applicative m ⇒ FieldValidator m (Msg (booleanExpected ∷ Query.Value | e)) Boolean
 boolean =
   liftFnV case _ of
     Just [ "on" ] → pure true
@@ -190,7 +184,7 @@ boolean =
 
 _invalidEnumValue = Proxy ∷ Proxy "invalidEnumValue"
 
-type InvalidEnumValue e = ( invalidEnumValue ∷ String | e )
+type InvalidEnumValue e = (invalidEnumValue ∷ String | e)
 
 flattenEnumErr
   :: forall err

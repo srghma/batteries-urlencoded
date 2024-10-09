@@ -14,7 +14,6 @@ module Polyform.Batteries.UrlEncoded.Duals
   , valueArray
   ) where
 
-
 import Prelude
 
 import Data.Array (singleton) as Array
@@ -34,21 +33,18 @@ import Polyform.Validator.Dual (lmapDual)
 import Type.Prelude (Proxy)
 import Type.Row (type (+))
 
-type FieldDual m e b
-  = Batteries.Dual' m e (Maybe Query.Value) b
+type FieldDual m e b = Batteries.Dual' m e (Maybe Query.Value) b
 
-type SingleValueFieldDual m e b
-  = Batteries.Dual' m e String b
+type SingleValueFieldDual m e b = Batteries.Dual' m e String b
 
-type MultiValueFieldDual m e b
-  = Batteries.Dual' m e (Array String) b
+type MultiValueFieldDual m e b = Batteries.Dual' m e (Array String) b
 
-optional ∷
-  ∀ a e m.
-  Monad m ⇒
-  FieldId →
-  SingleValueFieldDual m e a →
-  Dual' m e Query (Maybe a)
+optional
+  ∷ ∀ a e m
+  . Monad m
+  ⇒ FieldId
+  → SingleValueFieldDual m e a
+  → Dual' m e Query (Maybe a)
 optional name d = dual validator serializer
   where
   validator = Validators.optional name (Dual.parser d)
@@ -56,30 +52,30 @@ optional name d = dual validator serializer
   serializer = case _ of
     Just v → do
       i ← Dual.serializer d v
-      pure $ Query.singleton name [i]
+      pure $ Query.singleton name [ i ]
     Nothing → pure (Query.singleton name [])
 
-required ∷
-  ∀ a err m.
-  Monad m ⇒
-  FieldId →
-  err →
-  Batteries.Dual m err String a →
-  Dual m err Query a
+required
+  ∷ ∀ a err m
+  . Monad m
+  ⇒ FieldId
+  → err
+  → Batteries.Dual m err String a
+  → Dual m err Query a
 required name err d = dual validator serializer
   where
-    validator = Validators.required name err (Dual.parser d)
+  validator = Validators.required name err (Dual.parser d)
 
-    serializer o = do
-      v <- Dual.serializer d o
-      pure (Query.singleton name [v])
+  serializer o = do
+    v <- Dual.serializer d o
+    pure (Query.singleton name [ v ])
 
-required' ∷
-  ∀ a e m.
-  Monad m ⇒
-  FieldId →
-  SingleValueFieldDual m (MissingValue + e) a →
-  Dual' m (MissingValue + e) Query a
+required'
+  ∷ ∀ a e m
+  . Monad m
+  ⇒ FieldId
+  → SingleValueFieldDual m (MissingValue + e) a
+  → Dual' m (MissingValue + e) Query a
 required' name d = required name (missingValue "Missing value") d
 
 value ∷ ∀ err m. Monad m ⇒ err -> Batteries.Dual m err (Maybe Query.Value) String
