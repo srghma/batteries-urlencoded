@@ -8,7 +8,7 @@ import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Polyform (Dual(..))
-import Polyform.Batteries.UrlEncoded.Duals (required)
+import Polyform.Batteries.UrlEncoded.Duals (required')
 import Polyform.Dual ((~))
 import Polyform.Reporter.Dual (liftValidatorDualWith, runReporter)
 import Prim.RowList (class RowToList)
@@ -51,7 +51,7 @@ suite = do
               Test.Unit.suite " object" $ do
                 let
                   -- | Let's create a smiple form layout (`Array [String]`)
-                  field name = liftValidatorDualWith (const $ [ name ]) (const $ [ name ]) (required (FieldId name) identity)
+                  field name = liftValidatorDualWith (const $ [ name ]) (const $ [ name ]) (required' (FieldId name) identity)
                   form = Dual $ { foo: _, bar: _ } <$> _.foo ~ field "foo" <*> _.bar ~ field "bar"
                   -- | We expect that our layout is constructed correctly all the time
                   expectedReport = [ "foo", "bar" ]
